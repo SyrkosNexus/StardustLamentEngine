@@ -49,7 +49,7 @@ def main():
     
     # 获取奥尔特云半径
     oort_cloud_radius = terminal.galaxy_model.oort_cloud_radius
-    print(f"奥尔特云半径: {oort_cloud_radius}")
+    logging.info(f"奥尔特云半径: {oort_cloud_radius}")
     # 使用泊松盘采样算法生成均匀分布的点位
     # 最小距离设为200，确保点之间有足够的间距
     min_distance = oort_cloud_radius / 2
@@ -76,22 +76,22 @@ def main():
     terminal.set_time_step(10)
     
     # 运行模拟
-    print("开始星系模拟...")
+    logging.info("开始星系模拟...")
     status = terminal.get_galaxy_status()
-    print(f"星系状态: {status}")
+    logging.info(f"星系状态: {status}")
     
     # 运行365步（1年）
     results = terminal.run_simulation(500)
     
-    print("模拟完成！")
-    print(f"运行了 {len(results)} 步")
+    logging.info("模拟完成！")
+    logging.info(f"运行了 {len(results)} 步")
     
     # 显示最后一步的结果
     final_result = results[-1]
-    print(f"最后一步的位置: {final_result['positions']}")
-    print(f"最后一步的速度: {final_result['velocities']}")
-    print(f"捕获事件: {final_result['captures']}")
-    print(f"边界碰撞: {final_result['boundary_collisions']}")
+    logging.info(f"最后一步的位置: {final_result['positions']}")
+    logging.info(f"最后一步的速度: {final_result['velocities']}")
+    logging.info(f"捕获事件: {final_result['captures']}")
+    logging.info(f"边界碰撞: {final_result['boundary_collisions']}")
     
     # 绘制模拟轨迹图
     terminal.plot_simulation(results, "星系模拟轨迹", oort_cloud_radius=oort_cloud_radius)

@@ -121,7 +121,7 @@ class StellarCourtyard:
             CelestialPlume: 创建的星翎对象
         """
         celestial_plume = CelestialPlume(position, velocity, mass)
-        print(self.galaxy_model)
+        logging.info(self.galaxy_model)
         self.galaxy_model.celestial_plume = celestial_plume
         return celestial_plume
     
