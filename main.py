@@ -1,3 +1,4 @@
+import argparse
 from galaxy_system.stellar_courtyard import StellarCourtyard
 from galaxy_system.models.vector3d import Vector3D
 from poisson_disk_sampling import poisson_disk_sampling
@@ -10,6 +11,9 @@ def main():
     """
     主函数：演示星系模拟系统的使用
     """
+    parser = argparse.ArgumentParser(description='星系模拟系统')
+    parser.add_argument('--visual', action='store_true', help='启用可视化模式')
+    args = parser.parse_args()
     setup_logging(level=logging.INFO)
     # 创建星系管理终端
     terminal = StellarCourtyard()
@@ -24,7 +28,7 @@ def main():
     # 构建星系
     # 无限：镜像穿越
     terminal.build_galaxy(
-        central_mass=88500,
+        central_mass=885000,
         boundary_type="infinite",
         reflection_angle=0
     )
@@ -51,20 +55,35 @@ def main():
     oort_cloud_radius = terminal.galaxy_model.oort_cloud_radius
     logging.info(f"奥尔特云半径: {oort_cloud_radius}")
     # 使用泊松盘采样算法生成均匀分布的点位
-    # 最小距离设为200，确保点之间有足够的间距
-    min_distance = oort_cloud_radius / 2
-    sampled_points = poisson_disk_sampling(5, min_distance, bounds=(-oort_cloud_radius, oort_cloud_radius))
+    # 最小距离设为奥尔特云半径的10%，确保点之间有足够的间距
+    min_distance = oort_cloud_radius * 0.1
+    # 使用泊松盘采样生成点，并确保在奥尔特云半径的75%范围内
+    sampled_points = poisson_disk_sampling(
+        5,  # 增加点数
+        min_distance,
+        max_attempts=50,  # 增加尝试次数
+        radius=oort_cloud_radius * 0.75
+    )
 
     for i, (x, y, z) in enumerate(sampled_points):
         position = Vector3D(x, y, z)
         terminal.add_stellar_pearl(
             name=f"P{i+1}",
-            mass=50,
+            mass=2000,
             position=position,
         )
     
-    moving_point_initial_pos = Vector3D(random.uniform(-100.0, 100.0),random.uniform(-100.0, 100.0),random.uniform(-100.0, 100.0))  # 星翎的初始位置现在是规则的参考原点
-    moving_point_initial_vel = Vector3D(random.uniform(-1.0, 1.0), random.uniform(-1.0, 1.0), random.uniform(-1.0, 1.0))  # 初始速度
+    # 生成初始位置并验证在奥尔特云半径范围内
+    moving_point_initial_pos = Vector3D(
+        random.uniform(-oort_cloud_radius / 2, oort_cloud_radius / 2),
+        random.uniform(-oort_cloud_radius / 2, oort_cloud_radius / 2),
+        random.uniform(-oort_cloud_radius / 2, oort_cloud_radius / 2)
+    )
+    moving_point_initial_vel = Vector3D(
+        random.uniform(-1.0, 1.0),
+        random.uniform(-1.0, 1.0),
+        random.uniform(-1.0, 1.0)
+    )
     # 添加星翎（行星）
     terminal.set_celestial_plume(
         mass=1.0,                 # 地球质量
@@ -81,7 +100,7 @@ def main():
     logging.info(f"星系状态: {status}")
     
     # 运行365步（1年）
-    results = terminal.run_simulation(500)
+    results = terminal.run_simulation(5000)
     
     logging.info("模拟完成！")
     logging.info(f"运行了 {len(results)} 步")
@@ -93,8 +112,9 @@ def main():
     logging.info(f"捕获事件: {final_result['captures']}")
     logging.info(f"边界碰撞: {final_result['boundary_collisions']}")
     
-    # 绘制模拟轨迹图
-    terminal.plot_simulation(results, "星系模拟轨迹", oort_cloud_radius=oort_cloud_radius)
+    # 如果启用了可视化模式则绘制模拟轨迹图
+    if args.visual:
+        terminal.plot_simulation(results, "星系模拟轨迹", oort_cloud_radius=oort_cloud_radius)
 
 if __name__ == "__main__":
     main()

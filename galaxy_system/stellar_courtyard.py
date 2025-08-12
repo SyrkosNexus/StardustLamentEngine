@@ -285,18 +285,21 @@ class StellarCourtyard:
         fig = plt.figure(figsize=(12, 10))
         ax = fig.add_subplot(111, projection='3d')
         
-        # 如果没有warp事件，按原方式绘制轨迹
-        if not warp_indices:
-            # 优化采样率
-            step_size = max(1, len(positions) // 1000)
-            sampled_positions = positions[::step_size]
-            
+        # 创建渐变色轨迹
+        step_size = max(1, len(positions) // 1000)
+        sampled_positions = positions[::step_size]
+        
+        if len(sampled_positions) > 1:
             # 创建渐变色轨迹
             points = sampled_positions.reshape(-1, 1, 3)
             segments = np.concatenate([points[:-1], points[1:]], axis=1)
-            cmap = LinearSegmentedColormap.from_list('trajectory', ['blue', 'purple', 'red'])
+            
+            # 使用连续的颜色映射
+            cmap = LinearSegmentedColormap.from_list('trajectory',
+                ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'])
             norm = plt.Normalize(0, len(segments))
             
+            # 为每个线段创建渐变色
             for i, segment in enumerate(segments):
                 color = cmap(norm(i))
                 ax.plot(segment[:, 0], segment[:, 1], segment[:, 2],
@@ -306,36 +309,40 @@ class StellarCourtyard:
             sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
             sm.set_array([])
             cbar = plt.colorbar(sm, ax=ax, pad=0.1, shrink=0.8)
-            cbar.set_label('运动方向 (起点→终点)')
-        else:
-            # 分段绘制轨迹 - 确保每段独立不连接
-            segment_colors = ['blue', 'green', 'red', 'purple', 'orange']
-            start_idx = 0
+            cbar.set_label('轨迹进度 (起点→终点)')
+        
+        # 如果有warp事件，用不同方式处理颜色渐变
+        if warp_indices:
+            # 创建基于warp事件的颜色渐变
+            all_segments = []
+            colors = []
             
-            for segment_idx, warp_idx in enumerate(warp_indices):
+            start_idx = 0
+            segment_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+            
+            for segment_idx, warp_idx in enumerate(warp_indices + [len(positions)]):
                 end_idx = warp_idx
-                if start_idx <= end_idx:
-                    segment_positions = positions[start_idx:end_idx]  # 不包含warp点
-                    if len(segment_positions) > 1:  # 确保有足够点绘制线段
-                        step_size = max(1, len(segment_positions) // 500)
+                if start_idx < end_idx:
+                    segment_positions = positions[start_idx:end_idx]
+                    if len(segment_positions) > 1:
+                        step_size = max(1, len(segment_positions) // 300)
                         sampled_segment = segment_positions[::step_size]
                         
-                        color = segment_colors[segment_idx % len(segment_colors)]
-                        ax.plot(sampled_segment[:, 0], sampled_segment[:, 1], sampled_segment[:, 2],
-                               color=color, linewidth=1.2, alpha=0.8)
+                        # 为每个子段创建渐变色
+                        points = sampled_segment.reshape(-1, 1, 3)
+                        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+                        
+                        base_color = segment_colors[segment_idx % len(segment_colors)]
+                        cmap = LinearSegmentedColormap.from_list(f'segment_{segment_idx}',
+                            ['white', base_color, base_color])
+                        
+                        for i, segment in enumerate(segments):
+                            color_intensity = (i / max(1, len(segments) - 1))
+                            color = cmap(color_intensity)
+                            ax.plot(segment[:, 0], segment[:, 1], segment[:, 2],
+                                   color=color, linewidth=1.2, alpha=0.8)
                 
-                start_idx = warp_idx + 1
-            
-            # 绘制最后一段
-            if start_idx < len(positions):
-                segment_positions = positions[start_idx:]
-                if len(segment_positions) > 1:  # 确保有足够点绘制线段
-                    step_size = max(1, len(segment_positions) // 500)
-                    sampled_segment = segment_positions[::step_size]
-                    
-                    color = segment_colors[len(warp_indices) % len(segment_colors)]
-                    ax.plot(sampled_segment[:, 0], sampled_segment[:, 1], sampled_segment[:, 2],
-                           color=color, linewidth=1.2, alpha=0.8)
+                start_idx = end_idx
         
         # 标记起点和终点
         ax.scatter(positions[0, 0], positions[0, 1], positions[0, 2],
@@ -363,19 +370,29 @@ class StellarCourtyard:
         
         # 绘制奥尔特云球体（透明度30%的灰色球体）
         if oort_cloud_radius is not None:
-            u = np.linspace(0, 2 * np.pi, 50)
-            v = np.linspace(0, np.pi, 50)
-            x_sphere = oort_cloud_radius * np.outer(np.cos(u), np.sin(v))
-            y_sphere = oort_cloud_radius * np.outer(np.sin(u), np.sin(v))
-            z_sphere = oort_cloud_radius * np.outer(np.ones(np.size(u)), np.cos(v))
+            # 使用meshgrid生成更精确的球体坐标
+            u = np.linspace(0, 2 * np.pi, 100)
+            v = np.linspace(0, np.pi, 100)
+            x = oort_cloud_radius * np.outer(np.cos(u), np.sin(v))
+            y = oort_cloud_radius * np.outer(np.sin(u), np.sin(v))
+            z = oort_cloud_radius * np.outer(np.ones(np.size(u)), np.cos(v))
             
-            # 绘制球体表面，透明度30%，添加光照效果增强立体感
-            ax.plot_surface(x_sphere, y_sphere, z_sphere, color='gray', alpha=0.3,
-                          linewidth=0, antialiased=True, shade=True)
+            # 绘制球体表面，确保形状正确
+            ax.plot_surface(x, y, z,
+                          color='gray',
+                          alpha=0.3,
+                          linewidth=0,
+                          antialiased=True,
+                          rstride=5,
+                          cstride=5)
             
-            # 添加球体轮廓线增强立体感
-            ax.plot_wireframe(x_sphere, y_sphere, z_sphere, color='darkgray',
-                            alpha=0.2, linewidth=0.5, rstride=5, cstride=5)
+            # 添加轮廓线
+            ax.plot_wireframe(x, y, z,
+                            color='darkgray',
+                            alpha=0.2,
+                            linewidth=0.5,
+                            rstride=10,
+                            cstride=10)
         
         # 设置图表属性
         ax.set_xlabel('X (m)')
@@ -384,6 +401,13 @@ class StellarCourtyard:
         ax.set_title(title)
         ax.legend()
         ax.view_init(elev=30, azim=45)
+        
+        # 设置坐标轴等比例缩放
+        if oort_cloud_radius is not None:
+            ax.set_xlim(-oort_cloud_radius, oort_cloud_radius)
+            ax.set_ylim(-oort_cloud_radius, oort_cloud_radius)
+            ax.set_zlim(-oort_cloud_radius, oort_cloud_radius)
+        ax.set_box_aspect([1, 1, 1])  # 确保XYZ轴比例相同
         
         plt.tight_layout()
         plt.show(block=True)
