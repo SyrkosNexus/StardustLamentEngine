@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
 import math
+import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
@@ -275,7 +276,7 @@ class StellarCourtyard:
         if not positions:
             raise ValueError("没有有效的轨迹数据可用于绘图")
             
-        positions = np.array(positions)
+        positions = torch.tensor(positions, dtype=torch.float32)
         
         # 提取warp事件索引
         warp_indices = [i for i, state in enumerate(results)
@@ -291,7 +292,7 @@ class StellarCourtyard:
         
         if len(sampled_positions) > 1:
             # 创建渐变色轨迹
-            points = sampled_positions.reshape(-1, 1, 3)
+            points = sampled_positions.reshape(-1, 1, 3).numpy()
             segments = np.concatenate([points[:-1], points[1:]], axis=1)
             
             # 使用连续的颜色映射
@@ -329,7 +330,7 @@ class StellarCourtyard:
                         sampled_segment = segment_positions[::step_size]
                         
                         # 为每个子段创建渐变色
-                        points = sampled_segment.reshape(-1, 1, 3)
+                        points = sampled_segment.reshape(-1, 1, 3).numpy()
                         segments = np.concatenate([points[:-1], points[1:]], axis=1)
                         
                         base_color = segment_colors[segment_idx % len(segment_colors)]
@@ -345,9 +346,10 @@ class StellarCourtyard:
                 start_idx = end_idx
         
         # 标记起点和终点
-        ax.scatter(positions[0, 0], positions[0, 1], positions[0, 2],
+        positions_np = positions.numpy()
+        ax.scatter(positions_np[0, 0], positions_np[0, 1], positions_np[0, 2],
                   color='green', s=100, label='起点')
-        ax.scatter(positions[-1, 0], positions[-1, 1], positions[-1, 2],
+        ax.scatter(positions_np[-1, 0], positions_np[-1, 1], positions_np[-1, 2],
                   color='red', s=100, label='终点')
         
         # 绘制星核位置和轨道半径
@@ -357,11 +359,13 @@ class StellarCourtyard:
                       color='orange', s=150, marker='*', label=pearl.name)
             
             # 绘制轨道半径
-            u = np.linspace(0, 2 * np.pi, 20)
-            v = np.linspace(0, np.pi, 20)
-            x = pearl.orbit_radius * np.outer(np.cos(u), np.sin(v)) + pearl.position.x
-            y = pearl.orbit_radius * np.outer(np.sin(u), np.sin(v)) + pearl.position.y
-            z = pearl.orbit_radius * np.outer(np.ones(np.size(u)), np.cos(v)) + pearl.position.z
+            u = torch.linspace(0, 2 * math.pi, 20)
+            v = torch.linspace(0, math.pi, 20)
+            u_np = u.numpy()
+            v_np = v.numpy()
+            x = pearl.orbit_radius * np.outer(np.cos(u_np), np.sin(v_np)) + pearl.position.x
+            y = pearl.orbit_radius * np.outer(np.sin(u_np), np.sin(v_np)) + pearl.position.y
+            z = pearl.orbit_radius * np.outer(np.ones(np.size(u_np)), np.cos(v_np)) + pearl.position.z
             
             for j in range(0, 20, 5):
                 ax.plot(x[j, :], y[j, :], z[j, :], color='orange', alpha=0.2, linewidth=0.5)
@@ -371,11 +375,13 @@ class StellarCourtyard:
         # 绘制奥尔特云球体（透明度30%的灰色球体）
         if oort_cloud_radius is not None:
             # 使用meshgrid生成更精确的球体坐标
-            u = np.linspace(0, 2 * np.pi, 100)
-            v = np.linspace(0, np.pi, 100)
-            x = oort_cloud_radius * np.outer(np.cos(u), np.sin(v))
-            y = oort_cloud_radius * np.outer(np.sin(u), np.sin(v))
-            z = oort_cloud_radius * np.outer(np.ones(np.size(u)), np.cos(v))
+            u = torch.linspace(0, 2 * math.pi, 100)
+            v = torch.linspace(0, math.pi, 100)
+            u_np = u.numpy()
+            v_np = v.numpy()
+            x = oort_cloud_radius * np.outer(np.cos(u_np), np.sin(v_np))
+            y = oort_cloud_radius * np.outer(np.sin(u_np), np.sin(v_np))
+            z = oort_cloud_radius * np.outer(np.ones(np.size(u_np)), np.cos(v_np))
             
             # 绘制球体表面，确保形状正确
             ax.plot_surface(x, y, z,
