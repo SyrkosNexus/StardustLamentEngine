@@ -3,6 +3,7 @@ from galaxy_system.models.vector3d import Vector3D
 from poisson_disk_sampling import poisson_disk_sampling
 import random
 import logging
+import math
 from galaxy_system.logger import setup_logging
 
 def main():
@@ -21,15 +22,38 @@ def main():
     )
     
     # 构建星系
+    # 无限：镜像穿越
+    # terminal.build_galaxy(
+    #     central_mass=88500,
+    #     boundary_type="infinite",
+    #     reflection_angle=0
+    # )
+    # 无限：随机穿越
+    # terminal.build_galaxy(
+    #     central_mass=88500,
+    #     boundary_type="infinite",
+    #     reflection_angle=math.pi/2
+    # )
+    # 反射：标准反射
+    # terminal.build_galaxy(
+    #     central_mass=88500,
+    #     boundary_type="reflective",
+    #     reflection_angle=0
+    # )
+    # 反射：漫反射
     terminal.build_galaxy(
         central_mass=88500,
-        boundary_type="infinite",
+        boundary_type="reflective",
+        reflection_angle=math.pi/3
     )
     
+    # 获取奥尔特云半径
+    oort_cloud_radius = terminal.galaxy_model.oort_cloud_radius
+    print(f"奥尔特云半径: {oort_cloud_radius}")
     # 使用泊松盘采样算法生成均匀分布的点位
     # 最小距离设为200，确保点之间有足够的间距
-    min_distance = 200.0
-    sampled_points = poisson_disk_sampling(5, min_distance, bounds=(-200, 200))
+    min_distance = oort_cloud_radius / 2
+    sampled_points = poisson_disk_sampling(5, min_distance, bounds=(-oort_cloud_radius, oort_cloud_radius))
 
     for i, (x, y, z) in enumerate(sampled_points):
         position = Vector3D(x, y, z)
@@ -68,10 +92,6 @@ def main():
     print(f"最后一步的速度: {final_result['velocities']}")
     print(f"捕获事件: {final_result['captures']}")
     print(f"边界碰撞: {final_result['boundary_collisions']}")
-    
-    # 获取奥尔特云半径
-    oort_cloud_radius = terminal.galaxy_model.oort_cloud_radius
-    print(f"奥尔特云半径: {oort_cloud_radius}")
     
     # 绘制模拟轨迹图
     terminal.plot_simulation(results, "星系模拟轨迹", oort_cloud_radius=oort_cloud_radius)
