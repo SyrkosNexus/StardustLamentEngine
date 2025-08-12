@@ -30,8 +30,14 @@ class BoundaryAtrium(ABC):
         Returns:
             bool: 是否碰撞
         """
-        # 直接使用星翎的位置向量
-        return point.position.magnitude() >= self.boundary_radius
+        # 如果位置在边界外，先修正到边界内95%处
+        position_magnitude = point.position.magnitude()
+        if position_magnitude > self.boundary_radius:
+            correction_factor = 0.95 * self.boundary_radius / position_magnitude
+            point.position = point.position * correction_factor
+            return True
+            
+        return position_magnitude >= self.boundary_radius
     
     @abstractmethod
     def handle_collision(self, point: CelestialPlume) -> Tuple[Vector3D, Vector3D]:

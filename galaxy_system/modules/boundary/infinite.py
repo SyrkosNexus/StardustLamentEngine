@@ -8,7 +8,7 @@ from ...models.vector3d import Vector3D
 class MirrorAbyssGate(BoundaryAtrium):
     """镜渊之门：星翎抵达边际时，将穿过星穹原点，如露滴坠入镜渊另一侧"""
     
-    def __init__(self, boundary_radius: float, reflection_angle: float = 0, reflection_angle_range: float = math.pi/3):
+    def __init__(self, boundary_radius: float, reflection_angle: float = 0, reflection_angle_range: float = math.pi):
         """
         初始化无限边界效果
         
@@ -63,6 +63,8 @@ class MirrorAbyssGate(BoundaryAtrium):
             
             # 计算warp后的位置
             warped_position = origin_point + random_direction * self.boundary_radius
+            # 计算从当前位置指向原点的单位向量
             direction_to_origin = (origin_point - warped_position).normalize()
+            
             new_velocity = direction_to_origin * (point.velocity.magnitude() * 0.6)
         return warped_position, new_velocity
