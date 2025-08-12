@@ -350,7 +350,7 @@ class GravityLoom:
         根据影响力筛选引力源，只保留影响力最大的引力源
         
         参数:
-            point: 要计算的活动点
+            point: 要计算的星翎
             gravity_sources: 所有引力源列表
             influence_threshold: 影响力阈值，低于此值的引力源将被忽略
             max_sources: 最大保留的引力源数量

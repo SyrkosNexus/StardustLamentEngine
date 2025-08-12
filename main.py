@@ -10,7 +10,7 @@ def main():
     """
     主函数：演示星系模拟系统的使用
     """
-    setup_logging(level=logging.DEBUG)
+    setup_logging(level=logging.INFO)
     # 创建星系管理终端
     terminal = StellarCourtyard()
     
@@ -23,11 +23,11 @@ def main():
     
     # 构建星系
     # 无限：镜像穿越
-    # terminal.build_galaxy(
-    #     central_mass=88500,
-    #     boundary_type="infinite",
-    #     reflection_angle=0
-    # )
+    terminal.build_galaxy(
+        central_mass=88500,
+        boundary_type="infinite",
+        reflection_angle=0
+    )
     # 无限：随机穿越
     # terminal.build_galaxy(
     #     central_mass=88500,
@@ -41,11 +41,11 @@ def main():
     #     reflection_angle=0
     # )
     # 反射：漫反射
-    terminal.build_galaxy(
-        central_mass=88500,
-        boundary_type="reflective",
-        reflection_angle=math.pi/3
-    )
+    # terminal.build_galaxy(
+    #     central_mass=88500,
+    #     boundary_type="reflective",
+    #     reflection_angle=math.pi/3
+    # )
     
     # 获取奥尔特云半径
     oort_cloud_radius = terminal.galaxy_model.oort_cloud_radius
@@ -63,7 +63,7 @@ def main():
             position=position,
         )
     
-    moving_point_initial_pos = Vector3D(random.uniform(-100.0, 100.0),random.uniform(-100.0, 100.0),random.uniform(-100.0, 100.0))  # 活动点的初始位置现在是规则的参考原点
+    moving_point_initial_pos = Vector3D(random.uniform(-100.0, 100.0),random.uniform(-100.0, 100.0),random.uniform(-100.0, 100.0))  # 星翎的初始位置现在是规则的参考原点
     moving_point_initial_vel = Vector3D(random.uniform(-1.0, 1.0), random.uniform(-1.0, 1.0), random.uniform(-1.0, 1.0))  # 初始速度
     # 添加星翎（行星）
     terminal.set_celestial_plume(

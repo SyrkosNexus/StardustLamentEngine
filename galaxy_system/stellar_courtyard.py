@@ -308,32 +308,34 @@ class StellarCourtyard:
             cbar = plt.colorbar(sm, ax=ax, pad=0.1, shrink=0.8)
             cbar.set_label('运动方向 (起点→终点)')
         else:
-            # 分段绘制轨迹
+            # 分段绘制轨迹 - 确保每段独立不连接
             segment_colors = ['blue', 'green', 'red', 'purple', 'orange']
             start_idx = 0
             
             for segment_idx, warp_idx in enumerate(warp_indices):
                 end_idx = warp_idx
                 if start_idx <= end_idx:
-                    segment_positions = positions[start_idx:end_idx+1]
-                    step_size = max(1, len(segment_positions) // 500)
-                    sampled_segment = segment_positions[::step_size]
-                    
-                    color = segment_colors[segment_idx % len(segment_colors)]
-                    ax.plot(sampled_segment[:, 0], sampled_segment[:, 1], sampled_segment[:, 2],
-                           color=color, linewidth=1.2, alpha=0.8)
+                    segment_positions = positions[start_idx:end_idx]  # 不包含warp点
+                    if len(segment_positions) > 1:  # 确保有足够点绘制线段
+                        step_size = max(1, len(segment_positions) // 500)
+                        sampled_segment = segment_positions[::step_size]
+                        
+                        color = segment_colors[segment_idx % len(segment_colors)]
+                        ax.plot(sampled_segment[:, 0], sampled_segment[:, 1], sampled_segment[:, 2],
+                               color=color, linewidth=1.2, alpha=0.8)
                 
                 start_idx = warp_idx + 1
             
             # 绘制最后一段
             if start_idx < len(positions):
                 segment_positions = positions[start_idx:]
-                step_size = max(1, len(segment_positions) // 500)
-                sampled_segment = segment_positions[::step_size]
-                
-                color = segment_colors[len(warp_indices) % len(segment_colors)]
-                ax.plot(sampled_segment[:, 0], sampled_segment[:, 1], sampled_segment[:, 2],
-                       color=color, linewidth=1.2, alpha=0.8)
+                if len(segment_positions) > 1:  # 确保有足够点绘制线段
+                    step_size = max(1, len(segment_positions) // 500)
+                    sampled_segment = segment_positions[::step_size]
+                    
+                    color = segment_colors[len(warp_indices) % len(segment_colors)]
+                    ax.plot(sampled_segment[:, 0], sampled_segment[:, 1], sampled_segment[:, 2],
+                           color=color, linewidth=1.2, alpha=0.8)
         
         # 标记起点和终点
         ax.scatter(positions[0, 0], positions[0, 1], positions[0, 2],

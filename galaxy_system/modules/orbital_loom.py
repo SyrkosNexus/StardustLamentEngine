@@ -46,7 +46,7 @@ class OrbitalLoom:
         is_captured = False
         history = [] 
         
-        # 1. 计算当前最近的有效星核和它到活动点的距离
+        # 1. 计算当前最近的有效星核和它到星翎的距离
         # 注意：总是会有有效星核，因为已经处理了默认星核的情况
         logging.debug(f"步进{step}: 开始计算最近星核...")
         min_dist = float('inf')
@@ -69,7 +69,6 @@ class OrbitalLoom:
         if self.boundary_effect.check_collision(celestial_plume):
             logging.info(f"步进{step}: 触碰边界")
             is_captured = False  # 解除捕获状态
-            
             # 使用边界处理器处理边界情况
             new_position, new_velocity = self.boundary_effect.handle_collision(celestial_plume, step)
             # 更新位置和速度
@@ -82,7 +81,7 @@ class OrbitalLoom:
             })
             
             # 如果是warp事件，记录相关信息
-            logging.info(f"步进{step}: 边界处理(warp)，活动点已传送到球体另一侧")
+            logging.info(f"步进{step}: 边界处理，星翎已触碰了边界，位置发生变更")
             
             # 确保填充positions数据
             result["positions"][id(celestial_plume)] = celestial_plume.position
@@ -93,11 +92,11 @@ class OrbitalLoom:
 
         # ----------------------------------------
         # 捕获逻辑 (仅当未触发边界碰撞时执行)
-        # 当活动点与星核的距离小于该星核的理想同步轨道高度时，会被捕获
+        # 当星翎与星核的距离小于该星核的理想同步轨道高度时，会被捕获
         # 被捕获的星核会暂时失效60个步进
         logging.debug(f"步进{step}: 检查捕获条件...")
         if not is_captured:
-            # 检查是否满足捕获条件：活动点与星核的距离小于该星核的理想同步轨道高度
+            # 检查是否满足捕获条件：星翎与星核的距离小于该星核的理想同步轨道高度
             if min_dist < current_closest_anchor_obj.orbit_radius:
                 is_captured = True
                 # 无效化捕获星核
@@ -141,7 +140,7 @@ class OrbitalLoom:
                 celestial_plume, filtered_anchors, self.time_step
             )
             
-            # 更新活动点的速度和位置
+            # 更新星翎的速度和位置
             celestial_plume.velocity = new_velocity
             # 注意：位置更新会在后面的代码中进行
         
@@ -154,7 +153,6 @@ class OrbitalLoom:
             'velocity': celestial_plume.velocity,
             'is_captured': is_captured,
             'capturing_anchor': (current_closest_anchor_obj.name) if is_captured else None,
-            'is_warp': False  # 标记这不是一个warp事件
         })
 
         result["positions"][id(celestial_plume)] = celestial_plume.position
