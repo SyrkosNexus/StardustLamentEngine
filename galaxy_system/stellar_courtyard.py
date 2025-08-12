@@ -1,4 +1,5 @@
 from typing import List, Dict, Any
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
@@ -46,7 +47,7 @@ class StellarCourtyard:
         if gravity_force_min_distance is not None:
             self.constants["gravity_force_min_distance"] = gravity_force_min_distance
     
-    def build_galaxy(self, central_mass: float, boundary_type: str):
+    def build_galaxy(self, central_mass: float, boundary_type: str, reflection_angle: float = 0, reflection_angle_range: float = math.pi/3):
         """
         编织星穹
         
@@ -66,6 +67,8 @@ class StellarCourtyard:
             self.gravity_module,
             central_mass=central_mass,
             boundary_type=boundary_type,
+            reflection_angle=reflection_angle,
+            reflection_angle_range=reflection_angle_range
         )
         
         # 创建星轨织机

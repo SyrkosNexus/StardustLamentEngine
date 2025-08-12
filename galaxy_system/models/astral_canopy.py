@@ -1,4 +1,5 @@
-from typing import List, Tuple
+import math
+from typing import List
 from .stellar_pearl import StellarPearl
 from .celestial_plume import CelestialPlume
 from ..modules.gravity_loom import GravityLoom
@@ -9,7 +10,7 @@ from ..modules.boundary.reflective import PrismicEchoWall
 class AstralCanopy:
     """星穹领域：封闭的宇宙庭园，根据星律、领域核心（无引力）计算奥尔特云边界半径，根据界域特性生成星穹边际，以记录万物位置"""
     
-    def __init__(self, gravity_loom: GravityLoom, central_mass: float = 88500, boundary_type: str = "infinite"):
+    def __init__(self, gravity_loom: GravityLoom, central_mass: float = 88500, boundary_type: str = "infinite", reflection_angle: float = 0, reflection_angle_range: float = math.pi/3):
         """
         初始化星穹领域
         
